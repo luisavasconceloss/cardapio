@@ -990,18 +990,32 @@ $pratos = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Lista de modais que podem causar problemas de foco
+            // Limpeza de backdrop e foco ao fechar qualquer modal
             const modais = ['cartModal', 'paymentModal', 'customizeModal'];
     
             modais.forEach(modalId => {
                 const modal = document.getElementById(modalId);
                 if (modal) {
+                    // Evento principal: depois que o modal termina de fechar
+                    modal.addEventListener('hidden.bs.modal', function() {
+                        limparBackdrop();
+                    });
+                    // Fallback: quando começa a fechar (caso o hidden não dispare)
                     modal.addEventListener('hide.bs.modal', function() {
                         removerFoco();
+                        setTimeout(limparBackdrop, 350); // 350ms = duração da animação do Bootstrap
                     });
                 }
             });
         });
+
+        // Função centralizada para limpar backdrop e restaurar a página
+        function limparBackdrop() {
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.paddingRight = '';
+            document.body.style.overflow = '';
+        }
 
         // Função para salvar carrinho no localStorage
         function saveCart() {
@@ -1981,6 +1995,7 @@ $pratos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         // Fechar modais
                         bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+                        limparBackdrop();
                         displayCart();
                     } else {
                         alert('Erro ao enviar pedido: ' + (result.error || 'Tente novamente'));
