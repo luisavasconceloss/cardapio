@@ -85,13 +85,13 @@ if (!isset($_SESSION['funcionario_cargo']) || !in_array($_SESSION['funcionario_c
         /* ============================================================
            NAVBAR (Barra de Navegação)
            ============================================================
-           Estilo escuro com borda vermelha inferior.
+           Estilo escuro com borda neutra inferior.
            O backdrop-filter cria um efeito de vidro fosco (glassmorphism)
            quando o usuário rola a página, consistente com cardapio.php. */
         .navbar {
             background: rgba(0, 0, 0, 0.8) !important;
             backdrop-filter: blur(10px);
-            border-bottom: 1px solid #e63946;
+            border-bottom: 1px solid #4a6fa5;
         }
 
         /* Playfair Display para o brand — mesma fonte do cardápio */
@@ -102,18 +102,18 @@ if (!isset($_SESSION['funcionario_cargo']) || !in_array($_SESSION['funcionario_c
         }
 
         .navbar-brand span {
-            color: #e63946;
+            color: #7eb8da;
         }
 
         /* ============================================================
            BADGES DE STATUS
            ============================================================
            Cada status do pedido tem uma cor diferente para identificação
-           visual rápida:
-             - pendente:  amarelo (#ffc107) — aguardando atenção
-             - preparando: azul (#17a2b8) — em andamento
-             - concluido: verde (#28a745) — finalizado com sucesso
-             - cancelado: vermelho (#dc3545) — cancelado */
+           visual rápida — tons pasteis para ambiente de cozinha:
+             - pendente:  amarelo suave — aguardando atenção
+             - preparando: azul calmo — em andamento
+             - concluido: verde suave — finalizado com sucesso
+             - cancelado: rosa — cancelado */
         .status-badge {
             padding: 4px 12px;
             border-radius: 20px;
@@ -123,23 +123,23 @@ if (!isset($_SESSION['funcionario_cargo']) || !in_array($_SESSION['funcionario_c
         }
 
         .status-pendente {
-            background-color: #ffc107;
-            color: #1a1a1a;
+            background-color: #f0d060;
+            color: #3a3000;
         }
 
         .status-preparando {
-            background-color: #17a2b8;
-            color: white;
+            background-color: #7eb8da;
+            color: #0d2137;
         }
 
         .status-concluido {
-            background-color: #28a745;
-            color: white;
+            background-color: #7bc47f;
+            color: #0d3310;
         }
 
         .status-cancelado {
-            background-color: #dc3545;
-            color: white;
+            background-color: #e88ca5;
+            color: #3d0a1a;
         }
 
         /* ============================================================
@@ -161,35 +161,33 @@ if (!isset($_SESSION['funcionario_cargo']) || !in_array($_SESSION['funcionario_c
 
         .pedido-card:hover {
             transform: translateY(-5px);
-            border-color: #e63946;
-            box-shadow: 0 5px 20px rgba(230, 57, 70, 0.2);
+            border-color: #4a6fa5;
+            box-shadow: 0 5px 20px rgba(74, 111, 165, 0.2);
         }
 
         /* --- Bordas laterais por status ---
            A borda esquerda de 4px dá uma indicação visual imediata
            do status do pedido, sem precisar ler o badge. */
         .pedido-card.status-border-pendente {
-            border-left: 4px solid #ffc107;
+            border-left: 4px solid #f0d060;
         }
 
         .pedido-card.status-border-preparando {
-            border-left: 4px solid #17a2b8;
+            border-left: 4px solid #7eb8da;
         }
 
         .pedido-card.status-border-concluido {
-            border-left: 4px solid #28a745;
+            border-left: 4px solid #7bc47f;
         }
 
         .pedido-card.status-border-cancelado {
-            border-left: 4px solid #dc3545;
+            border-left: 4px solid #e88ca5;
         }
 
         /* --- Header do card ---
-           Gradiente vermelho (#e63946 → #c1121f) — consistente
-           com o estilo do cardápio. Contém o número do pedido,
-           horário e badge de status. */
+           Gradiente azul suave — tom calmo e profissional para cozinha. */
         .pedido-header {
-            background: linear-gradient(135deg, #e63946, #c1121f);
+            background: linear-gradient(135deg, #4a6fa5, #3a5a8a);
             border-radius: 12px 12px 0 0;
             padding: 15px;
             display: flex;
@@ -232,9 +230,9 @@ if (!isset($_SESSION['funcionario_cargo']) || !in_array($_SESSION['funcionario_c
             font-weight: 500;
         }
 
-        /* Quantidade em vermelho — mesma cor primária do projeto */
+        /* Quantidade — tom azul suave para destaque sem agressividade */
         .item-quantidade {
-            color: #e63946;
+            color: #7eb8da;
             font-weight: bold;
         }
 
@@ -245,8 +243,8 @@ if (!isset($_SESSION['funcionario_cargo']) || !in_array($_SESSION['funcionario_c
            este badge aparece pulsante para chamar atenção.
            Usa animação CSS @keyframes. */
         .badge-urgencia {
-            background-color: #dc3545;
-            color: white;
+            background-color: #e88ca5;
+            color: #3d0a1a;
             padding: 2px 8px;
             border-radius: 10px;
             font-size: 0.65rem;
@@ -277,13 +275,13 @@ if (!isset($_SESSION['funcionario_cargo']) || !in_array($_SESSION['funcionario_c
         }
 
         .nav-tabs .nav-link:hover {
-            color: #e63946;
+            color: #7eb8da;
         }
 
         .nav-tabs .nav-link.active {
-            color: #e63946;
+            color: #7eb8da;
             background: transparent;
-            border-bottom: 2px solid #e63946;
+            border-bottom: 2px solid #7eb8da;
         }
 
         /* ============================================================
@@ -314,7 +312,7 @@ if (!isset($_SESSION['funcionario_cargo']) || !in_array($_SESSION['funcionario_c
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #e63946;
+            background: #4a6fa5;
             border-radius: 4px;
         }
 
@@ -324,7 +322,7 @@ if (!isset($_SESSION['funcionario_cargo']) || !in_array($_SESSION['funcionario_c
            Mostra o número de pedidos em cada aba.
            Círculo vermelho pequeno e discreto. */
         .badge-count {
-            background-color: #e63946;
+            background-color: #4a6fa5;
             color: white;
             border-radius: 50%;
             padding: 2px 6px;
@@ -376,6 +374,30 @@ if (!isset($_SESSION['funcionario_cargo']) || !in_array($_SESSION['funcionario_c
             transform: none;
         }
 
+        /* Botão "Iniciar" — tom amarelo suave (antes era warning padrão) */
+        .btn-iniciar {
+            background-color: #f0d060;
+            color: #3a3000;
+            border: none;
+        }
+
+        .btn-iniciar:hover {
+            background-color: #e6c44a;
+            color: #3a3000;
+        }
+
+        /* Botão "Concluir" — tom verde suave (antes era success padrão) */
+        .btn-concluir {
+            background-color: #7bc47f;
+            color: #0d3310;
+            border: none;
+        }
+
+        .btn-concluir:hover {
+            background-color: #6ab86e;
+            color: #0d3310;
+        }
+
         /* ============================================================
            EMPTY STATE (estados vazios)
            ============================================================
@@ -388,7 +410,7 @@ if (!isset($_SESSION['funcionario_cargo']) || !in_array($_SESSION['funcionario_c
 
         .empty-state i {
             font-size: 64px;
-            color: #444;
+            color: #4a6fa5;
             margin-bottom: 15px;
         }
 
@@ -517,7 +539,7 @@ if (!isset($_SESSION['funcionario_cargo']) || !in_array($_SESSION['funcionario_c
                 <div class="row g-4" id="pedidosAtivosContainer">
                     <!-- Loading spinner — exibido enquanto os dados são carregados -->
                     <div class="col-12 text-center py-5">
-                        <div class="spinner-border text-danger" role="status">
+                        <div class="spinner-border text-info" role="status">
                             <span class="visually-hidden">Carregando...</span>
                         </div>
                     </div>
@@ -529,7 +551,7 @@ if (!isset($_SESSION['funcionario_cargo']) || !in_array($_SESSION['funcionario_c
             <div class="tab-pane fade" id="historico" role="tabpanel">
                 <div class="row g-4" id="historicoContainer">
                     <div class="col-12 text-center py-5">
-                        <div class="spinner-border text-danger" role="status">
+                        <div class="spinner-border text-info" role="status">
                             <span class="visually-hidden">Carregando...</span>
                         </div>
                     </div>
@@ -780,7 +802,7 @@ if (!isset($_SESSION['funcionario_cargo']) || !in_array($_SESSION['funcionario_c
                         <div class="mt-3 pt-2 border-top border-secondary">
                             <div class="d-flex justify-content-between">
                                 <strong>Total:</strong>
-                                <strong class="text-danger">R$ ${parseFloat(pedido.total).toFixed(2)}</strong>
+                                <strong class="text-info">R$ ${parseFloat(pedido.total).toFixed(2)}</strong>
                             </div>
                             <div class="d-flex justify-content-between mt-1">
                                 <small>Subtotal:</small>
@@ -808,13 +830,13 @@ if (!isset($_SESSION['funcionario_cargo']) || !in_array($_SESSION['funcionario_c
                 // Botão "Iniciar" — aparece apenas para pedidos PENDENTES
                 // Muda o status de pendente → preparando
                 if (pedido.status === 'pendente') {
-                    html += `<button class="btn btn-acao btn-warning flex-grow-1" onclick="atualizarStatus(${pedido.id_pedido}, 'preparando', this)">
+                    html += `<button class="btn btn-acao btn-iniciar flex-grow-1" onclick="atualizarStatus(${pedido.id_pedido}, 'preparando', this)">
                             <i class="bi bi-play-fill"></i> Iniciar Preparo
                         </button>`;
                 // Botão "Concluir" — aparece apenas para pedidos EM PREPARO
                 // Muda o status de preparando → concluido
                 } else if (pedido.status === 'preparando') {
-                    html += `<button class="btn btn-acao btn-success flex-grow-1" onclick="atualizarStatus(${pedido.id_pedido}, 'concluido', this)">
+                    html += `<button class="btn btn-acao btn-concluir flex-grow-1" onclick="atualizarStatus(${pedido.id_pedido}, 'concluido', this)">
                             <i class="bi bi-check-lg"></i> Concluir Pedido
                         </button>`;
                 }
@@ -1022,8 +1044,8 @@ if (!isset($_SESSION['funcionario_cargo']) || !in_array($_SESSION['funcionario_c
                         </div>
                     ` : ''}
                     <div class="d-flex justify-content-between mt-2">
-                        <strong class="text-danger">Total:</strong>
-                        <strong class="text-danger">R$ ${parseFloat(pedido.total).toFixed(2)}</strong>
+                        <strong class="text-info">Total:</strong>
+                        <strong class="text-info">R$ ${parseFloat(pedido.total).toFixed(2)}</strong>
                     </div>
                     <div class="d-flex justify-content-between mt-1">
                         <small>Forma de pagamento:</small>
