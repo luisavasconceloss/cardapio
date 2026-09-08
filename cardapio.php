@@ -2031,7 +2031,7 @@ $pratos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         itensHtml = pedido.itens.map(item =>
                             `<div class="d-flex justify-content-between" style="font-size: 0.85rem;">
                                 <span>${item.quantidade}x ${escapeHtml(item.nome)}</span>
-                                <span>R$ ${item.preco.toFixed(2)}</span>
+                                <span>R$ ${parseFloat(item.preco).toFixed(2)}</span>
                             </div>`
                         ).join('');
                     }
@@ -2051,9 +2051,9 @@ $pratos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <div class="d-flex justify-content-between" style="border-top: 1px solid #333; padding-top: 8px; font-size: 0.9rem;">
                                 <div>
                                     <span class="text-muted">Pagamento:</span> ${escapeHtml(pedido.forma_pagamento)}
-                                    ${pedido.desconto > 0 ? `<span class="text-success ms-2">(-R$ ${pedido.desconto.toFixed(2)})</span>` : ''}
+                                    ${parseFloat(pedido.desconto) > 0 ? `<span class="text-success ms-2">(-R$ ${parseFloat(pedido.desconto).toFixed(2)})</span>` : ''}
                                 </div>
-                                <strong class="text-danger" style="font-size: 1.05rem;">R$ ${pedido.total.toFixed(2)}</strong>
+                                <strong class="text-danger" style="font-size: 1.05rem;">R$ ${parseFloat(pedido.total).toFixed(2)}</strong>
                             </div>
                             ${pedido.observacoes ? `<div class="mt-2" style="font-size: 0.8rem;"><i class="bi bi-chat-left-text"></i> ${escapeHtml(pedido.observacoes)}</div>` : ''}
                         </div>
