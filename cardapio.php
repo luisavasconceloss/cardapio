@@ -17,7 +17,7 @@ $pratos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <title>Sushi Wabi-Sabi | Cardápio Digital</title>
     <link rel="shortcut icon" href="img/logo-sushi.png" type="image/x-icon">
     <!-- PWA — Manifest e meta tags para instalação como app -->
-    <link rel="manifest" href="manifest.json">
+    <link id="pwa-manifest" rel="manifest">
     <meta name="theme-color" content="#0b0b0b">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -2244,6 +2244,33 @@ $pratos = $stmt->fetchAll(PDO::FETCH_ASSOC);
         window.finalizarPedido = finalizarPedido;
         window.selectPayment = selectPayment;
         window.confirmarPedido = confirmarPedido;
+
+        // ============================================================
+        // PWA — Manifest via Blob (bypass anti-bot do InfinityFree)
+        // ============================================================
+        const manifestData = {
+            name: "Sushi Wabi-Sabi - Cardápio Digital",
+            short_name: "Wabi-Sabi",
+            description: "Cardápio digital do restaurante Sushi Wabi-Sabi.",
+            start_url: "./cardapio.php",
+            scope: "./",
+            display: "fullscreen",
+            orientation: "portrait",
+            background_color: "#0b0b0b",
+            theme_color: "#0b0b0b",
+            lang: "pt-BR",
+            icons: [
+                { src: "img/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+                { src: "img/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+                { src: "img/icon-192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
+                { src: "img/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" }
+            ],
+            categories: ["food", "restaurant"]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        document.getElementById('pwa-manifest').href = manifestUrl;
+        console.log('[PWA] Manifest injetado via blob');
 
         // ============================================================
         // PWA — Registro do Service Worker
