@@ -16,6 +16,13 @@ $pratos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sushi Wabi-Sabi | Cardápio Digital</title>
     <link rel="shortcut icon" href="img/logo-sushi.png" type="image/x-icon">
+    <!-- PWA — Manifest e meta tags para instalação como app -->
+    <link rel="manifest" href="manifest.php">
+    <meta name="theme-color" content="#0b0b0b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Wabi-Sabi">
+    <link rel="apple-touch-icon" href="img/icon-192.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -444,10 +451,106 @@ $pratos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 display: none;
             }
         }
+
+        /* ============================================================
+           BANNER OFFLINE (PWA)
+           ============================================================
+           Barra amarela no topo quando o usuário está sem conexão.
+           Desaparece automaticamente quando a internet retorna. */
+        .offline-banner {
+            background: #f0d060;
+            color: #3a3000;
+            text-align: center;
+            padding: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 9999;
+        }
+
+        /* ============================================================
+           SPLASH SCREEN (PWA)
+           ============================================================
+           Tela inicial que aparece por 5 segundos ao abrir o app.
+           Fundo escuro com ícone centralizado pulsando.
+           Desaparece com fade out após o tempo definido. */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0b0b0b;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            transition: opacity 0.8s ease;
+        }
+
+        .splash-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .splash-logo {
+            width: 150px;
+            height: 150px;
+            animation: splash-pulse 1.5s ease-in-out infinite;
+        }
+
+        .splash-text {
+            margin-top: 25px;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ffffff;
+            letter-spacing: 3px;
+        }
+
+        .splash-subtext {
+            margin-top: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            color: #666;
+            letter-spacing: 1px;
+        }
+
+        @keyframes splash-pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.15);
+                opacity: 0.7;
+            }
+        }
     </style>
 </head>
 
 <body>
+    <!-- ============================================================
+         SPLASH SCREEN — Tela de abertura do app
+         ============================================================
+         Aparece por 5 segundos ao abrir o cardápio.
+         O ícone fica pulsando (animação CSS).
+         Após 5 segundos, faz fade out e esconde. -->
+    <div class="splash-screen" id="splashScreen">
+        <img src="img/logo-sushi.png" alt="Wabi-Sabi" class="splash-logo">
+        <div class="splash-text">WABI-SABI</div>
+        <div class="splash-subtext">Cardápio Digital</div>
+    </div>
+
+    <!-- Banner offline — aparece quando não há conexão com a internet -->
+    <div class="offline-banner" id="offlineBanner">
+        <i class="bi bi-wifi-off"></i> Você está offline — o cardápio pode estar desatualizado
+    </div>
     <nav class="navbar navbar-expand-lg navbar-dark bg-black sticky-top border-bottom border-secondary">
         <div class="container">
             <a class="navbar-brand fw-bold" href="#home">
@@ -1861,53 +1964,116 @@ $pratos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             document.getElementById('selectedPayment').value = payment;
         }
 
-        function salvarPedidoHistorico(pedido) {
+        async function carregarHistoricoPedidos() {
             const usuarioId = <?= isset($_SESSION['usuario_id']) ? $_SESSION['usuario_id'] : 'null' ?>;
-            if (usuarioId) {
-                let historico = JSON.parse(localStorage.getItem(`pedidos_${usuarioId}`)) || [];
-                pedido.id = Date.now();
-                pedido.data = new Date().toLocaleString();
-                historico.push(pedido);
-                localStorage.setItem(`pedidos_${usuarioId}`, JSON.stringify(historico));
-            }
-        }
+            const pedidosContent = document.getElementById('pedidosContent');
 
-        function carregarHistoricoPedidos() {
-            const usuarioId = <?= isset($_SESSION['usuario_id']) ? $_SESSION['usuario_id'] : 'null' ?>;
-            if (usuarioId) {
-                const historico = JSON.parse(localStorage.getItem(`pedidos_${usuarioId}`)) || [];
-                const pedidosContent = document.getElementById('pedidosContent');
-                if (historico.length === 0) {
+            if (!usuarioId) {
+                pedidosContent.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="bi bi-inbox" style="font-size: 50px;"></i>
+                        <p class="mt-3">Faça login para ver seus pedidos.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            pedidosContent.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border text-danger" role="status"></div>
+                    <p class="mt-3">Carregando pedidos...</p>
+                </div>
+            `;
+
+            try {
+                console.log('[MeusPedidos] Buscando pedidos...');
+                const response = await fetch('api_pedidos.php?action=meus_pedidos', { credentials: 'same-origin' });
+                console.log('[MeusPedidos] Status:', response.status);
+                const text = await response.text();
+                console.log('[MeusPedidos] Resposta bruta:', text.substring(0, 300));
+                const pedidos = JSON.parse(text);
+                console.log('[MeusPedidos] Pedidos recebidos:', Array.isArray(pedidos) ? pedidos.length : pedidos);
+
+                if (pedidos.error) {
+                    pedidosContent.innerHTML = `
+                        <div class="text-center py-5">
+                            <i class="bi bi-exclamation-triangle" style="font-size: 50px; color: #f0d060;"></i>
+                            <p class="mt-3">${pedidos.error}</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (pedidos.length === 0) {
                     pedidosContent.innerHTML = `
                         <div class="text-center py-5">
                             <i class="bi bi-inbox" style="font-size: 50px;"></i>
                             <p class="mt-3">Nenhum pedido encontrado.</p>
                         </div>
                     `;
-                } else {
-                    let html = '<div class="list-group">';
-                    historico.reverse().forEach(pedido => {
-                        html += `
-                            <div class="list-group-item bg-dark text-white border-secondary mb-2">
-                                <div class="d-flex justify-content-between">
-                                    <strong>Pedido #${pedido.id}</strong>
-                                    <small>${pedido.data}</small>
-                                </div>
-                                <div class="mt-2">
-                                    <strong>Total:</strong> R$ ${pedido.total ? pedido.total.toFixed(2) : '0,00'}
-                                </div>
-                                <div class="mt-2">
-                                    <strong>Forma de Pagamento:</strong> ${pedido.pagamento || 'Não informado'}
-                                </div>
-                                <button class="btn btn-sm btn-outline-danger mt-2" onclick="alert('Repetir pedido #${pedido.id}')">
-                                    <i class="bi bi-arrow-repeat"></i> Pedir Novamente
-                                </button>
-                            </div>
-                        `;
-                    });
-                    html += '</div>';
-                    pedidosContent.innerHTML = html;
+                    return;
                 }
+
+                const statusLabels = {
+                    'pendente': '<span class="badge bg-warning text-dark">Pendente</span>',
+                    'preparando': '<span class="badge bg-info">Em Preparo</span>',
+                    'concluido': '<span class="badge bg-success">Concluido</span>',
+                    'cancelado': '<span class="badge bg-danger">Cancelado</span>'
+                };
+
+                let html = '<div class="list-group">';
+                pedidos.forEach(pedido => {
+                    const data = new Date(pedido.data_pedido).toLocaleString('pt-BR');
+                    const statusHtml = statusLabels[pedido.status] || `<span class="badge bg-secondary">${pedido.status}</span>`;
+
+                    let itensHtml = '';
+                    if (pedido.itens && Array.isArray(pedido.itens)) {
+                        itensHtml = pedido.itens.map(item =>
+                            `<div class="d-flex justify-content-between" style="font-size: 0.85rem;">
+                                <span>${item.quantidade}x ${escapeHtml(item.nome)}</span>
+                                <span>R$ ${item.preco.toFixed(2)}</span>
+                            </div>`
+                        ).join('');
+                    }
+
+                    html += `
+                        <div class="list-group-item bg-dark text-white border-secondary mb-3" style="border-radius: 10px;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <strong style="font-size: 0.95rem;">#${escapeHtml(pedido.numero_pedido)}</strong>
+                                    <span class="ms-2">${statusHtml}</span>
+                                </div>
+                                <small class="text-muted">${data}</small>
+                            </div>
+                            <div class="mb-2" style="border-top: 1px solid #333; padding-top: 8px;">
+                                ${itensHtml}
+                            </div>
+                            <div class="d-flex justify-content-between" style="border-top: 1px solid #333; padding-top: 8px; font-size: 0.9rem;">
+                                <div>
+                                    <span class="text-muted">Pagamento:</span> ${escapeHtml(pedido.forma_pagamento)}
+                                    ${pedido.desconto > 0 ? `<span class="text-success ms-2">(-R$ ${pedido.desconto.toFixed(2)})</span>` : ''}
+                                </div>
+                                <strong class="text-danger" style="font-size: 1.05rem;">R$ ${pedido.total.toFixed(2)}</strong>
+                            </div>
+                            ${pedido.observacoes ? `<div class="mt-2" style="font-size: 0.8rem;"><i class="bi bi-chat-left-text"></i> ${escapeHtml(pedido.observacoes)}</div>` : ''}
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                pedidosContent.innerHTML = html;
+
+            } catch (error) {
+                console.error('[MeusPedidos] Erro completo:', error);
+                pedidosContent.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="bi bi-exclamation-triangle" style="font-size: 50px; color: #f0d060;"></i>
+                        <p class="mt-3">Erro ao carregar pedidos.</p>
+                        <p class="text-muted" style="font-size: 0.8rem;">${escapeHtml(error.message)}</p>
+                        <button class="btn btn-sm btn-outline-light mt-2" onclick="carregarHistoricoPedidos()">
+                            <i class="bi bi-arrow-clockwise"></i> Tentar novamente
+                        </button>
+                    </div>
+                `;
             }
         }
 
@@ -2003,7 +2169,11 @@ $pratos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 })
                 .catch(error => {
                     console.error('Erro:', error);
-                    alert('Erro ao conectar com o servidor. Tente novamente.');
+                    if (!navigator.onLine) {
+                        alert('Você está offline. Conecte-se à internet para enviar pedidos.');
+                    } else {
+                        alert('Erro ao conectar com o servidor. Tente novamente.');
+                    }
                 })
                 .finally(() => {
                     if (btnConfirmar) {
@@ -2041,6 +2211,21 @@ $pratos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         updateCartCount();
 
+        // ============================================================
+        // SPLASH SCREEN — Esconde após 5 segundos
+        // ============================================================
+        // Espera 5 segundos, depois adiciona a classe fade-out
+        // que faz o splash desaparecer suavemente (0.8s de transição).
+        // Após a transição, remove o elemento do DOM para liberar memória.
+        setTimeout(() => {
+            const splash = document.getElementById('splashScreen');
+            if (splash) {
+                splash.classList.add('fade-out');
+                // Remove o elemento depois da animação de fade (0.8s)
+                setTimeout(() => splash.remove(), 800);
+            }
+        }, 5000);
+
         String.prototype.hashCode = function() {
             let hash = 0;
             for (let i = 0; i < this.length; i++) {
@@ -2059,6 +2244,53 @@ $pratos = $stmt->fetchAll(PDO::FETCH_ASSOC);
         window.finalizarPedido = finalizarPedido;
         window.selectPayment = selectPayment;
         window.confirmarPedido = confirmarPedido;
+
+        // ============================================================
+        // PWA — Registro do Service Worker
+        // ============================================================
+        // Verifica se o navegador suporta Service Workers e registra.
+        // O SW é necessário para cache offline e instalação como app.
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then((reg) => {
+                    console.log('[PWA] Service Worker registrado:', reg.scope);
+                    // Verifica se ha atualizacao do SW
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        console.log('[PWA] Nova versao do SW encontrada, atualizando...');
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'activated') {
+                                console.log('[PWA] SW atualizado, recarregando...');
+                                window.location.reload();
+                            }
+                        });
+                    });
+                })
+                .catch((err) => {
+                    console.error('[PWA] Erro ao registrar SW:', err);
+                });
+        }
+
+        // ============================================================
+        // PWA — Detecção de conexão (online/offline)
+        // ============================================================
+        // Mostra/esconde o banner offline quando a conexão muda.
+        const offlineBanner = document.getElementById('offlineBanner');
+
+        // Verifica estado inicial ao carregar a página
+        if (!navigator.onLine && offlineBanner) {
+            offlineBanner.style.display = 'block';
+        }
+
+        // Quando perde a conexão
+        window.addEventListener('offline', () => {
+            if (offlineBanner) offlineBanner.style.display = 'block';
+        });
+
+        // Quando reconecta
+        window.addEventListener('online', () => {
+            if (offlineBanner) offlineBanner.style.display = 'none';
+        });
     </script>
 </body>
 

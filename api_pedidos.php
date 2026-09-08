@@ -3,22 +3,16 @@ session_start();
 header('Content-Type: application/json');
 include "conexao.php";
 
-// Verifica se está logado como cliente OU como funcionário
 $isCliente = isset($_SESSION['usuario_id']);
 $isFuncionario = isset($_SESSION['funcionario_id']);
 
-// Se não estiver logado de nenhuma forma, nega acesso
 if (!$isCliente && !$isFuncionario) {
-    echo json_encode(['error' => 'Não autorizado']);
+    echo json_encode(['error' => 'Nao autorizado']);
     exit();
 }
 
-// Determinar o nome do usuário logado (para logs)
-$nomeUsuario = $isFuncionario ? $_SESSION['funcionario_nome'] : $_SESSION['usuario_nome'];
-
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
-// Salvar novo pedido (apenas clientes podem fazer pedidos)
 if ($action == 'salvar_pedido' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     if (!$isCliente) {
         echo json_encode(['error' => 'Apenas clientes podem fazer pedidos']);
@@ -42,11 +36,9 @@ if ($action == 'salvar_pedido' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if ($stmt->execute([$id_usuario, $numero_pedido, $itens, $subtotal, $desconto, $total, $forma_pagamento, $observacoes])) {
         $id_pedido = $pdo->lastInsertId();
-        
-        // Registrar log (status inicial 'pendente')
         $logSql = "INSERT INTO pedido_status_log (id_pedido, status_anterior, status_novo, alterado_por) VALUES (?, NULL, 'pendente', ?)";
         $logStmt = $pdo->prepare($logSql);
-        $logStmt->execute([$id_pedido, $nomeUsuario]);
+        $logStmt->execute([$id_pedido, $_SESSION['usuario_nome']]);
         
         echo json_encode(['success' => true, 'numero_pedido' => $numero_pedido]);
     } else {
@@ -55,10 +47,39 @@ if ($action == 'salvar_pedido' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     exit();
 }
 
-// Buscar pedidos pendentes (apenas cozinha)
+if ($action == 'meus_pedidos') {
+    if (!$isCliente) {
+        echo json_encode(['error' => 'Apenas clientes podem ver seus pedidos']);
+        exit();
+    }
+
+    $id_usuario = $_SESSION['usuario_id'];
+
+    try {
+        $sql = "SELECT p.id_pedido, p.numero_pedido, p.itens, p.subtotal, p.desconto, p.total, 
+                       p.forma_pagamento, p.observacoes, p.status, p.data_pedido
+                FROM pedidos p 
+                WHERE p.id_usuario = ? 
+                ORDER BY p.data_pedido DESC 
+                LIMIT 30";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$id_usuario]);
+        $pedidos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($pedidos as &$pedido) {
+            $pedido['itens'] = json_decode($pedido['itens'], true);
+        }
+
+        echo json_encode($pedidos);
+    } catch (PDOException $e) {
+        echo json_encode(['error' => 'Erro ao buscar pedidos', 'details' => $e->getMessage()]);
+    }
+    exit();
+}
+
 if ($action == 'pedidos_pendentes') {
     if (!$isFuncionario) {
-        echo json_encode(['error' => 'Acesso restrito à cozinha']);
+        echo json_encode(['error' => 'Acesso restrito a cozinha']);
         exit();
     }
     
@@ -78,10 +99,9 @@ if ($action == 'pedidos_pendentes') {
     exit();
 }
 
-// Buscar histórico de pedidos (apenas cozinha)
 if ($action == 'historico_pedidos') {
     if (!$isFuncionario) {
-        echo json_encode(['error' => 'Acesso restrito à cozinha']);
+        echo json_encode(['error' => 'Acesso restrito a cozinha']);
         exit();
     }
     
@@ -101,10 +121,9 @@ if ($action == 'historico_pedidos') {
     exit();
 }
 
-// Atualizar status do pedido (apenas cozinha)
 if ($action == 'atualizar_status' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     if (!$isFuncionario) {
-        echo json_encode(['error' => 'Acesso restrito à cozinha']);
+        echo json_encode(['error' => 'Acesso restrito a cozinha']);
         exit();
     }
     
@@ -121,10 +140,9 @@ if ($action == 'atualizar_status' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     $stmt = $pdo->prepare($sql);
     
     if ($stmt->execute([$novo_status, $id_pedido])) {
-        // Registrar log usando o nome do funcionário que alterou
         $logSql = "INSERT INTO pedido_status_log (id_pedido, status_anterior, status_novo, alterado_por) VALUES (?, ?, ?, ?)";
         $logStmt = $pdo->prepare($logSql);
-        $logStmt->execute([$id_pedido, $status_anterior, $novo_status, $nomeUsuario]);
+        $logStmt->execute([$id_pedido, $status_anterior, $novo_status, $_SESSION['funcionario_nome']]);
         
         echo json_encode(['success' => true]);
     } else {
@@ -133,10 +151,9 @@ if ($action == 'atualizar_status' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     exit();
 }
 
-// Buscar um pedido específico (apenas cozinha)
 if ($action == 'buscar_pedido' && isset($_GET['id'])) {
     if (!$isFuncionario) {
-        echo json_encode(['error' => 'Acesso restrito à cozinha']);
+        echo json_encode(['error' => 'Acesso restrito a cozinha']);
         exit();
     }
     
@@ -153,10 +170,10 @@ if ($action == 'buscar_pedido' && isset($_GET['id'])) {
         $pedido['itens'] = json_decode($pedido['itens'], true);
         echo json_encode($pedido);
     } else {
-        echo json_encode(['error' => 'Pedido não encontrado']);
+        echo json_encode(['error' => 'Pedido nao encontrado']);
     }
     exit();
 }
 
-echo json_encode(['error' => 'Ação inválida']);
+echo json_encode(['error' => 'Acao invalida']);
 ?>
