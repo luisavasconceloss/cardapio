@@ -17,7 +17,7 @@ $pratos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <title>Sushi Wabi-Sabi | Cardápio Digital</title>
     <link rel="shortcut icon" href="img/logo-sushi.png" type="image/x-icon">
     <!-- PWA — Manifest e meta tags para instalação como app -->
-    <link rel="manifest" href="manifest.php">
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b0b0b">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
